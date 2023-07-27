@@ -33,7 +33,7 @@ export class PokemonService {
 
   async findOne(term: string) {
     let pokemon : Pokemon;
-    
+
     // no
     if( !isNaN(+term) ){
       pokemon = await this.pokemonModel.findOne({ no: term });
@@ -54,8 +54,22 @@ export class PokemonService {
     return pokemon;
   }
 
-  update(id: number, updatePokemonDto: UpdatePokemonDto) {
-    return `This action updates a #${id} pokemon`;
+  async update(term: string, updatePokemonDto: UpdatePokemonDto) {
+    const pokemon = await this.findOne(term)
+    if(updatePokemonDto.name)
+    updatePokemonDto.name = updatePokemonDto.name.toLocaleLowerCase();
+    try {
+      await pokemon.updateOne(updatePokemonDto)
+      return {...pokemon.toJSON(), ...updatePokemonDto};
+    } catch (error) {
+      console.log(error);
+      if (error.code === 11000){
+        throw new BadRequestException(`Pokemon exists in db ${JSON.stringify(error.keyValue)}` )
+      }
+      throw new InternalServerErrorException(`Can't update pokemon - Check Server logs`)
+
+    }
+    //return `This action updates a #${id} pokemon`;
   }
 
   remove(id: number) {
